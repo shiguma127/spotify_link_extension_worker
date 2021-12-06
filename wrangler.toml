@@ -2,9 +2,12 @@ name = "spotify_link_extension_worker"
 type = "javascript"
 workers_dev = true
 compatibility_date = "2021-12-03"
-
+kv_namespaces = [
+  { binding = "SESSION_KV", preview_id = "01ecaebc449e406ca7c5fb1e45b6dc63", id = "e4c4f74e619748bea00638eba90341e8" }
+]
 [vars]
 WORKERS_RS_VERSION = "0.0.7"
+SESSION_TTL = 2592000 # 30 days
 
 [build]
 command = "cargo install -q worker-build && worker-build --release" # required

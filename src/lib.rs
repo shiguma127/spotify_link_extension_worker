@@ -3,7 +3,6 @@ use worker::*;
 
 mod utils;
 mod routes;
-
 fn log_request(req: &Request) {
     console_log!(
         "{} - [{}], located at: {:?}, within: {}",
@@ -32,7 +31,7 @@ pub async fn main(req: Request, env: Env) -> Result<Response> {
     router
         .get("/", routes::index::handler)
         .get("/login",routes::login::handler)
-        .get("/callback",routes::callback::handler)
+        .get_async("/callback",routes::callback::handler)
         .get("/worker-version", |_, ctx| {
             let version = ctx.var("WORKERS_RS_VERSION")?.to_string();
             Response::ok(version)
