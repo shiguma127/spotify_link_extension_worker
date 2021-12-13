@@ -16,6 +16,7 @@ worker = "0.0.7"
 serde_json = "1.0.67"
 http = "0.2"
 uuid = { version = "0.8", features = ["v4","wasm-bindgen"]}
+rspotify = {git = "https://github.com/shiguma127/rspotify.git", branch = "tomo/remove-send-from-all"}
 wasm-bindgen = "=0.2.78"
 wasm-bindgen-futures = "0.4"
 js-sys = "0.3"
