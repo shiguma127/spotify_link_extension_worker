@@ -14,7 +14,10 @@ pub async fn handler(req: Request, ctx: RouteContext<()>) -> Result<Response> {
         None => return Response::error("UNAUTHORIZED", StatusCode::UNAUTHORIZED.as_u16()),
     };
     let cookie = utils::get_cookie_from_string(cookie_string);
-    let session_id = cookie.get("session_id").unwrap();
+    let session_id = match cookie.get("session_id"){
+        Some(session_id) => session_id,
+        None => return Response::error("UNAUTHORIZED", StatusCode::UNAUTHORIZED.as_u16()),
+    };
 
     let kv = ctx.kv("SESSION_KV").unwrap();
     let token_json = match kv.get(session_id).await.unwrap() {
@@ -56,8 +59,13 @@ pub async fn handler(req: Request, ctx: RouteContext<()>) -> Result<Response> {
         None => return Response::error("No Playing context", StatusCode::BAD_REQUEST.as_u16()),
     };
 
-    match item {
-        PlayableItem::Track(track) => Response::from_json(&track),
-        PlayableItem::Episode(episode) => Response::from_json(&episode),
-    }
+    let mut response = match item {
+        PlayableItem::Track(track) => Response::from_json(&track).unwrap(),
+        PlayableItem::Episode(episode) => Response::from_json(&episode).unwrap(),
+    };
+
+    response.headers_mut()
+        //add CORS
+        .append("Access-Control-Allow-Origin", "https://tweetdeck.twitter.com")?;
+    Ok(response)
 }

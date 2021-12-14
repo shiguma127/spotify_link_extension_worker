@@ -6,10 +6,9 @@ kv_namespaces = [
   { binding = "SESSION_KV", preview_id = "01ecaebc449e406ca7c5fb1e45b6dc63", id = "e4c4f74e619748bea00638eba90341e8" }
 ]
 [vars]
-
-WORKERS_RS_VERSION = "0.0.7"
 SESSION_TTL = 2592000 # 30 days
-REDIRECT_URI = "http://localhost:8787/callback"
+REDIRECT_URI = "http://127.0.0.1:8787/callback"
+
 SCOPES = "user-read-currently-playing,user-read-playback-state"
 
 [build]
