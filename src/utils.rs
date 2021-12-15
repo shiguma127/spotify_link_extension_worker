@@ -23,7 +23,7 @@ pub fn get_spotify_client(
         secret: Some(ctx.secret("spotify_client_secret")?.to_string()),
     };
     let oauth = OAuth {
-        redirect_uri: String::from("http://127.0.0.1:8787/callback"),//ctx.var("REDIRECT_URI")?.to_string(),
+        redirect_uri: ctx.var("REDIRECT_URI")?.to_string(),
         scopes: ctx
             .var("SCOPES")?
             .to_string()

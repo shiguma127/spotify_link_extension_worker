@@ -9,9 +9,13 @@ use worker::{Request, Response, Result, RouteContext};
 use crate::utils;
 
 pub async fn handler(req: Request, ctx: RouteContext<()>) -> Result<Response> {
-    let cookie_string = match req.headers().get("cookie").unwrap() {
+     let cookie_string = match req.headers().get("cookie") {
+        Ok(cookie) => cookie,
+        Err(err) => return Response::error(format!("UNAUTHORIZED : can't get cookie header \n {:?}",err), StatusCode::UNAUTHORIZED.as_u16()),
+    };
+    let cookie_string = match cookie_string {
         Some(cookie) => cookie,
-        None => return Response::error("UNAUTHORIZED", StatusCode::UNAUTHORIZED.as_u16()),
+        None => return Response::error("UNAUTHORIZED : cookie is None ", StatusCode::UNAUTHORIZED.as_u16()),
     };
     let cookie = utils::get_cookie_from_string(cookie_string);
     let session_id = match cookie.get("session_id"){
@@ -19,17 +23,26 @@ pub async fn handler(req: Request, ctx: RouteContext<()>) -> Result<Response> {
         None => return Response::error("UNAUTHORIZED", StatusCode::UNAUTHORIZED.as_u16()),
     };
 
-    let kv = ctx.kv("SESSION_KV").unwrap();
-    let token_json = match kv.get(session_id).await.unwrap() {
+    let kv = match ctx.kv("SESSION_KV"){
+        Ok(kv) => kv,
+        Err(err) => return Response::error(format!("INTERNAL_SERVER_ERROR : Can't get KvStore \n {:?}",err), StatusCode::INTERNAL_SERVER_ERROR.as_u16()),
+    };
+
+    let token_json = match kv.get(session_id).await {
+        Ok(token_json) => token_json,
+        Err(err) => return Response::error(format!("UNAUTHORIZED : can't get session value from KvStore \n {:?}",err), StatusCode::UNAUTHORIZED.as_u16()),
+    };
+
+    let token_json = match token_json {
         Some(token_json) => token_json.as_string(),
-        None => return Response::error("UNAUTHORIZED", StatusCode::UNAUTHORIZED.as_u16()),
+        None => return Response::error("UNAUTHORIZED : there is no session", StatusCode::UNAUTHORIZED.as_u16()),
     };
 
     let token = match serde_json::from_str::<Token>(&token_json) {
         Ok(token) => token,
-        Err(_) => {
+        Err(err) => {
             return Response::error(
-                "INTERNAL_SERVER_ERROR",
+                format!("INTERNAL_SERVER_ERROR \n {:?}",err),
                 StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
             )
         }
@@ -46,7 +59,7 @@ pub async fn handler(req: Request, ctx: RouteContext<()>) -> Result<Response> {
         .await
     {
         Ok(context) => context,
-        Err(_err) => return Response::error("UNAUTHORIZED", StatusCode::UNAUTHORIZED.as_u16()),
+        Err(err) => return Response::error(format!("UNAUTHORIZED \n {:?}",err), StatusCode::UNAUTHORIZED.as_u16()),
     };
 
     let playing_context = match result {
@@ -67,5 +80,9 @@ pub async fn handler(req: Request, ctx: RouteContext<()>) -> Result<Response> {
     response.headers_mut()
         //add CORS
         .append("Access-Control-Allow-Origin", "https://tweetdeck.twitter.com")?;
+    response.headers_mut()
+        .append("access-control-allow-credentials","true")?;
+    response.headers_mut()
+        .append("access-control-allow-methods","GET")?;
     Ok(response)
 }
