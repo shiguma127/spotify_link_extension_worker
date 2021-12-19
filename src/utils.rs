@@ -35,6 +35,15 @@ pub fn get_spotify_client(
     Ok(AuthCodeSpotify::new(credentials, oauth))
 }
 
+pub fn get_spotify_credentials(ctx: &RouteContext<()>)->Result<Credentials, Box<dyn std::error::Error>>{
+    Ok(
+        Credentials {
+        id: ctx.secret("spotify_client_id")?.to_string(),
+        secret: Some(ctx.secret("spotify_client_secret")?.to_string()),
+    }
+    )
+}
+
 pub fn get_cookie_from_string(cookie_string: String) -> HashMap<String, String> {
     let mut cookie_map = HashMap::new();
     for cookie in cookie_string.split(';') {

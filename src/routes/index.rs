@@ -49,6 +49,7 @@ pub async fn handler(req: Request, ctx: RouteContext<()>) -> Result<Response> {
     };
 
     let mut spotify = AuthCodeSpotify::from_token(token);
+    spotify.creds = utils::get_spotify_credentials(&ctx).unwrap();
     spotify.config.token_refreshing = true;
 
     let result = match spotify
