@@ -39,6 +39,11 @@ pub async fn handler(req: Request, ctx: RouteContext<()>) -> Result<Response> {
         None => return Response::error("INTERNAL_SERVER_ERROR : can't get token", StatusCode::INTERNAL_SERVER_ERROR.as_u16()),
     };
 
+    let session_ttl : u64 = match ctx.var("SESSION_TTL"){
+        Ok(session_ttl) => session_ttl.to_string().parse().unwrap(),
+        Err(_) => return Response::error("INTERNAL_SERVER_ERROR : can't get token", StatusCode::INTERNAL_SERVER_ERROR.as_u16()),
+    };
+
     //sessionにtokenを追加
     let uuid = Uuid::new_v4();
     let kv = match ctx.kv("SESSION_KV"){
@@ -50,12 +55,12 @@ pub async fn handler(req: Request, ctx: RouteContext<()>) -> Result<Response> {
         Err(err) => return Response::error(format!("INTERNAL_SERVER_ERROR : Can't parse Json \n {:?}",err), StatusCode::INTERNAL_SERVER_ERROR.as_u16())
     };
     kv.put(uuid.to_string().as_str(), token_json)?
-        .expiration_ttl(30000)
+        .expiration_ttl(session_ttl)
         .execute()
         .await?;
     let mut response = Response::ok("Login successful").unwrap();
     response
         .headers_mut()
-        .append("Set-Cookie", format!("session_id={}; Secure; SameSite=None;", uuid).as_str())?;
+        .append("Set-Cookie", format!("session_id={}; Max-Age={}; Secure; SameSite=None;", uuid,session_ttl).as_str())?;
     Ok(response)
 }
